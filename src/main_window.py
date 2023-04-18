@@ -458,20 +458,24 @@ class MainWindow(QMainWindow):
                 # Parse Header
                 # Expected: "Foo_x","Foo_y","Bar_x","Bar_y",...
                 # Convert to: "Foo","Bar",...
+                # header = next(reader)
                 header = ["_".join(h.strip().split("_")[:-1]) for h in next(reader)]
                 header = list(dict.fromkeys(header))
-                header.insert(0, "Time")
+                # header.insert(0, "Time")
                 self.plot_page.plot.set_header(header)
 
                 dataset = []
                 for row in reader:
-                    time = float(row[0])
-                    signals = [float(x) for x in row[1::2]]
-                    data = []
-                    data.append(time)
-                    data.extend(signals)
-                    dataset.append(data)
-                self.plot_page.plot.update_data(dataset)
+                    #time = float(row[0])
+                    #signals = [float(x) for x in row[1::2]]
+                    signals = [float(x) for x in row]
+                    #data = []
+                    #data.append(time)
+                    #data.extend(signals)
+                    #dataset.append(data)
+                    dataset.append(signals)
+                # self.plot_page.plot.update_data(dataset)
+                self.plot_page.plot.update_raw(dataset)
                 self.log("Successfully imported from '{}'".format(path))
 
     # window functions

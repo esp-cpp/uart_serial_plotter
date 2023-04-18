@@ -52,6 +52,23 @@ class Plot(object):
         for i, name in enumerate(self.trace_names[1:]):
             self.set_plotdata(name, self.data[name]["x"], self.data[name]["y"])
 
+    def update_raw(self, data):
+        for name in self.trace_names:
+            # initialize the data for this trace
+            if name not in self.data:
+                self.data[name] = {"x": [], "y": []}
+
+        for row in data:
+            print("row len: {}".format(len(row)))
+            for i in range(0, len(self.trace_names)):
+                print("updating data for {} - {}".format(i, self.trace_names[i]))
+                self.data[self.trace_names[i]]["x"].append(row[i*2])
+                self.data[self.trace_names[i]]["y"].append(row[i*2+1])
+
+        # now actually plot the data
+        for i, name in enumerate(self.trace_names):
+            self.set_plotdata(name, self.data[name]["x"], self.data[name]["y"])
+
     def set_plotdata(self, name, data_x, data_y):
         if name in self.traces:
             self.traces[name].setData(data_x, data_y)
