@@ -15,13 +15,33 @@ This project provides [pyqtgraph](https://www.pyqtgraph.org/) based applications
 - Reset the connected device using DTR/RTS hardware flow control
   - Tested on ESP32
 
+## Setup
+
+``` console
+brew install qt5
+brew install pyqt5
+python3 -m venv env
+source env/bin/activate
+pip install -r requirements.txt
+```
+
+## Creating an Installer
+
+``` console
+source env/bin/activate
+cd src
+pyinstaller uart_serial_plotter.spec 
+```
+
 ## Quick Start
 
 ```console
-foo@bar:~$ python src/main.py
+source env/bin/activate
+python src/main.py
 ```
 
 
 ## Notes:
 
 * For M1 Macs, you can either run the MacOS release or, if you are developing / would like to run source, you may need to follow the instructions here to use a python environment within rosetta: https://stackoverflow.com/questions/65901162/how-can-i-run-pyqt5-on-my-mac-with-m1chip
+* If you have issues, maybe look a [this stackoverflow](https://stackoverflow.com/questions/70961915/error-while-installing-pytq5-with-pip-preparing-metadata-pyproject-toml-did-n)
