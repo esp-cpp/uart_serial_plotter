@@ -191,7 +191,7 @@ class MainWindow(QMainWindow):
         self.exitAction = Action(None, "Exit", self)
         self.exitAction.setStatusTip("Exit")
         self.exitAction.setShortcut("Ctrl+Q")
-        self.exitAction.triggered.connect(self.close)
+        self.exitAction.triggered.connect(self.__quit)
 
         self.exportOutputWindowAction = Action(None, "Export UART data", self)
         self.exportOutputWindowAction.setStatusTip(
@@ -207,8 +207,8 @@ class MainWindow(QMainWindow):
         )
         self.autoClearPlotAction.triggered.connect(self.__on_auto_clear_plot_action__)
         self.autoClearPlotAction.setCheckable(True)
-        self.autoClearPlotAction.setChecked(False)
-        self.auto_clear_plot_on_header_change = False
+        self.autoClearPlotAction.setChecked(True)
+        self.auto_clear_plot_on_header_change = True
 
         self.refreshAction = Action(None, "Refresh Ports", self)
         self.refreshAction.setStatusTip("Refresh Serial Ports")
@@ -479,6 +479,10 @@ class MainWindow(QMainWindow):
                 self.log("Successfully imported from '{}'".format(path))
 
     # window functions
+    def __quit(self):
+        self.__close_port()
+        self.close()
+
     def __center_window__(self):
         qr = self.frameGeometry()
         cp = QDesktopWidget().availableGeometry().center()
@@ -498,36 +502,47 @@ class MainWindow(QMainWindow):
             self.serial_port.close()
             self.log("Closed serial port")
 
+        # if baudrate or port are invalid, return
+        if not self.port or not self.baudrate:
+            self.log("Invalid port or baudrate")
+            self.log(f"Port: {self.port}, Baudrate: {self.baudrate}")
+            return
+
+        print("Opening serial port {}, baud={}".format(self.port, self.baudrate))
+        self.serial_port = serial.Serial()
+        self.serial_port.port = self.port
+        self.serial_port.baudrate = self.baudrate
+        # Disable hardware flow control
+        self.serial_port.setRTS(False)
+        self.serial_port.setDTR(False)
+        # open the serial port
+        self.serial_port.open()
+        # update the menubar text
+        self.__change_menubar_text_open_close_port__()
+
+        # if auto clear plot is enabled, clear the plot
+        if self.auto_clear_plot_on_header_change:
+            self.__clear_plot__()
+
         # start a thread to open and read from the serial port
-        self.serial_port_thread = threading.Thread(target = self.__open_and_read_serial_port__)
+        self.serial_port_thread = threading.Thread(target = self.__read_serial_port__)
         self.run_serial_port_thread = True
         self.serial_port_thread.start()
 
-    def __open_and_read_serial_port__(self):
-        # Open serial_port
-        if self.port and self.baudrate:
-            print("Opening serial port {}, baud={}".format(self.port, self.baudrate))
-            self.serial_port = serial.Serial()
-            self.serial_port.port = self.port
-            self.serial_port.baudrate = self.baudrate
-            # Disable hardware flow control
-            self.serial_port.setRTS(False)
-            self.serial_port.setDTR(False)
-            try:
-                self.serial_port.open()
-                while self.run_serial_port_thread:
-                    if self.serial_port.inWaiting():
-                        serial_port_data = self.serial_port.readline()
-                        # and decode it
-                        if sys.version_info >= (3, 0):
-                            serial_port_data = serial_port_data.decode("utf-8", "backslashreplace")
-                        serial_port_data = escape_ansi(serial_port_data)
-                        serial_port_data = serial_port_data.strip()
-                        self.serial_data_queue.put_nowait(serial_port_data)
-            except Exception as e:
-                print("Serial port thread exception: " + str(e))
-        else:
-            print("Invalid serial port")
+    def __read_serial_port__(self):
+        # Loop until the thread is asked to stop
+        try:
+            while self.run_serial_port_thread:
+                if self.serial_port.inWaiting():
+                    serial_port_data = self.serial_port.readline()
+                    # and decode it
+                    if sys.version_info >= (3, 0):
+                        serial_port_data = serial_port_data.decode("utf-8", "backslashreplace")
+                    serial_port_data = escape_ansi(serial_port_data)
+                    serial_port_data = serial_port_data.strip()
+                    self.serial_data_queue.put_nowait(serial_port_data)
+        except Exception as e:
+            print("Serial port thread exception: " + str(e))
         print("Serial port thread exiting")
 
     def __update_plot__(self):
@@ -582,20 +597,31 @@ class MainWindow(QMainWindow):
                     pass
 
     def __open_close_port__(self):
-        if self.serial_port.is_open:
-            self.serial_port.close()
-            self.log("Closed serial port")
-            self.openClosePort.setText("Open " + str(self.port))
-            self.openClosePort.setToolTip("Open serial port")
+        if self.serial_port and self.serial_port.is_open:
+            self.__close_port()
         else:
+            self.__reopen_serial_port__()
+
+    def __close_port(self):
+        self.log("Closing serial port")
+        self.run_serial_port_thread = False
+        if self.serial_port:
             try:
-                self.serial_port.open()
+                self.serial_port.close()
+                self.log("Closed serial port")
             except Exception as e:
                 self.log(str(e))
-                return
-            self.log("Opened serial port")
-            self.openClosePort.setText("Close " + str(self.port))
-            self.openClosePort.setToolTip("Close serial port")
+        self.__change_menubar_text_open_close_port__()
+
+    def __open_port(self):
+        self.log("Opening serial port")
+        if self.serial_port:
+            try:
+                self.serial_port.open()
+                self.log("Opened serial port")
+            except Exception as e:
+                self.log(str(e))
+        self.__change_menubar_text_open_close_port__()
 
     def __change_menubar_text_open_close_port__(self):
         if self.serial_port:
