@@ -381,6 +381,9 @@ class MainWindow(QMainWindow):
         self.plot_page.plot.data = {}
 
     def __open_raw__(self):
+        # ensure we close the serial port
+        self.__close_port()
+
         dialog = QFileDialog()
         fmts = ["Any Text Files (*.csv *.txt)", "CSV (*csv)", "Text (*txt)"]
         dialog.setDefaultSuffix(fmts[0])
