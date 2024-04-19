@@ -438,6 +438,9 @@ class MainWindow(QMainWindow):
                 self.log("Successfully imported from '{}'".format(path))
 
     def __import_scene__(self):
+        # ensure we close the serial port
+        self.__close_port()
+
         dialog = QFileDialog()
         fmts = ["CSV (*csv)"]
         dialog.setDefaultSuffix(fmts[0])
