@@ -54,6 +54,7 @@ class MainWindow(QMainWindow):
         self.serial_port_thread = None
         self.serial_port = None
         self.port = None
+        self.output_editor = None
         self.baudrate = 115200
         self.baudrate_values = [
             110,
@@ -529,6 +530,9 @@ class MainWindow(QMainWindow):
         # if auto clear plot is enabled, clear the plot
         if self.auto_clear_plot_on_header_change:
             self.__clear_plot__()
+            if self.output_editor:
+                # and also clear the output editor
+                self.output_editor.clear()
 
         # start a thread to open and read from the serial port
         self.serial_port_thread = threading.Thread(target = self.__read_serial_port__)
