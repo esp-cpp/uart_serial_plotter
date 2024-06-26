@@ -656,7 +656,7 @@ class MainWindow(QMainWindow):
             self.auto_clear_plot_on_header_change = False
 
     def __save_received_data_to_file__(self):
-        name = QtWidgets.QFileDialog.getSaveFileName(self, "Save file", ".", "*.txt;;*")
+        name = QFileDialog.getSaveFileName(self, caption="Save file", filter="*.txt;;*")
         if len(name) > 0 and name[0] != '':
             with open(name[0], "w") as file:
                 file.write(self.output_editor.toPlainText())
