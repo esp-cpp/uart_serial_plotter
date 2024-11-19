@@ -4,6 +4,7 @@ from PyQt5 import QtWidgets
 import re
 import serial
 import serial.tools.list_ports
+from io import StringIO
 
 import threading
 import queue
@@ -26,7 +27,7 @@ from PyQt5.QtWidgets import (
     QDialog,
     QFileDialog,
     QSplitter,
-    QTextEdit,
+    QPlainTextEdit,
     QVBoxLayout,
 )
 
@@ -35,7 +36,6 @@ from pages import PlotPage
 from list_serial_ports import list_serial_ports
 import csv
 from tabs import Tabs
-
 
 class MainWindow(QMainWindow):
 
@@ -108,7 +108,7 @@ class MainWindow(QMainWindow):
 
     def __get_editor_stylesheet__(self):
         return """
-        QTextEdit {
+        QPlainTextEdit {
             background: rgb(27,27,28); border-color: gray; color: rgb(255, 255, 255);
         }
         QScrollBar {
@@ -129,7 +129,7 @@ class MainWindow(QMainWindow):
     def __init_ui__(self):
         QApplication.setStyle(QStyleFactory.create("Cleanlooks"))
         self.__init_font__()
-        self.log_editor = QTextEdit()
+        self.log_editor = QPlainTextEdit()
         self.log_editor.setFont(self.font)
         self.log_editor.setStyleSheet(self.__get_editor_stylesheet__())
 
@@ -158,7 +158,7 @@ class MainWindow(QMainWindow):
 
         self.setStyleSheet("QMainWindow { background-color: rgb(27,27,28); }")
 
-        self.output_editor = QTextEdit()
+        self.output_editor = QPlainTextEdit()
         self.output_editor.setFont(self.font)
         self.output_editor.setStyleSheet(self.__get_editor_stylesheet__())
 
@@ -399,9 +399,10 @@ class MainWindow(QMainWindow):
             self.plot_tab.setToolTip(path)
 
             with open(path, "r") as csvfile:
-                self.output(csvfile.read())
-                csvfile.seek(0, 0) # go back to the beginning
-                reader = csv.reader(csvfile)
+                filedata = csvfile.read()
+                filedata = escape_ansi(filedata)
+                self.output(filedata)
+                reader = csv.reader(StringIO(filedata))
 
                 # Clear existing plot and set new header
                 self.__clear_plot__()
