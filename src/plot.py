@@ -26,7 +26,10 @@ class Plot(object):
 
     def set_header(self, header_names):
         self.trace_names = header_names
-        for i, name in enumerate(self.trace_names):
+        # the first trace is the x axis, so take it out and use it to set the x
+        # axis label
+        self.plot_item.setLabel("bottom", text=self.trace_names[0])
+        for i, name in enumerate(self.trace_names[1:]):
             if name in self.traces:
                 pass
             else:
@@ -60,13 +63,13 @@ class Plot(object):
 
         for row in data:
             print("row len: {}".format(len(row)))
-            for i in range(0, len(self.trace_names)):
+            for i in range(1, len(self.trace_names)):
                 print("updating data for {} - {}".format(i, self.trace_names[i]))
                 self.data[self.trace_names[i]]["x"].append(row[i*2])
                 self.data[self.trace_names[i]]["y"].append(row[i*2+1])
 
         # now actually plot the data
-        for i, name in enumerate(self.trace_names):
+        for i, name in enumerate(self.trace_names[1:]):
             self.set_plotdata(name, self.data[name]["x"], self.data[name]["y"])
 
     def set_plotdata(self, name, data_x, data_y):
