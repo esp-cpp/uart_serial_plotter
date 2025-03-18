@@ -29,8 +29,7 @@ pip install -r requirements.txt
 
 ``` console
 source env/bin/activate
-cd src
-pyinstaller uart_serial_plotter.spec 
+python -m pyinstaller --clean src/uart_serial_plotter.spec 
 ```
 
 ## Quick Start
