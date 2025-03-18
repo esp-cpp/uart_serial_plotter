@@ -37,19 +37,18 @@ jobs:
         ${{ steps.id_python_313.outputs.python-path }} -m PyInstaller --clean src/uart_serial_plotter.spec
         $artifact="uart_serial_plotter_$(git describe --tags --dirty)_windows.exe"
         mv dist/uart_serial_plotter.exe ${artifact}
-        "windowsArtifactName=${artifact}" | Out-File -FilePath $env:GITHUB_ENV -Append
-        "windowsArtifactPath=./${artifact}" | Out-File -FilePath $env:GITHUB_ENV -Append
+        "windowsArtifact=${artifact}" | Out-File -FilePath $env:GITHUB_ENV -Append
 
     - uses: actions/upload-artifact@v4
       with:
-        name: ${{ env.windowsArtifactName }}
-        path: ${{ env.windowsArtifactPath }}
+        name: ${{ env.windowsArtifact }}
+        path: ${{ env.windowsArtifact }}
 
     - name: Attach UART Serial Plotter (Windows) Build to release
       uses: softprops/action-gh-release@v2
       if: ${{ github.event.release && github.event.action == 'published' }}
       with:
-        files: ${{ env.windowsArtifactPath }}
+        files: ${{ env.windowsArtifact }}
 
   build_linux:
 
@@ -77,19 +76,18 @@ jobs:
         ${{ steps.id_python_313.outputs.python-path }} -m PyInstaller --clean src/uart_serial_plotter.spec
         artifact="uart_serial_plotter_$(git describe --tags --dirty)_linux.bin"
         mv dist/uart_serial_plotter $artifact
-        echo "linuxArtifactName=$artifact" >> "$GITHUB_ENV"
-        echo "linuxArtifactPath=pyniji/$artifact" >> "$GITHUB_ENV"
+        echo "linuxArtifact=$artifact" >> "$GITHUB_ENV"
 
     - uses: actions/upload-artifact@v4
       with:
-        name: ${{ env.linuxArtifactName }}
-        path: ${{ env.linuxArtifactPath }}
+        name: ${{ env.linuxArtifact }}
+        path: ${{ env.linuxArtifact }}
 
     - name: Attach UART Serial Plotter (Linux) Build to release
       uses: softprops/action-gh-release@v2
       if: ${{ github.event.release && github.event.action == 'published' }}
       with:
-        files: ${{ env.linuxArtifactPath }}
+        files: ${{ env.linuxArtifact }}
 
   build_macos:
 
@@ -122,16 +120,15 @@ jobs:
         ${{ steps.id_python_313.outputs.python-path }} -m PyInstaller --clean src/uart_serial_plotter.spec
         artifact="uart_serial_plotter_$(git describe --tags --dirty)_macos.bin"
         mv dist/uart_serial_plotter $artifact
-        echo "macosArtifactName=$artifact" >> "$GITHUB_ENV"
-        echo "macosArtifactPath=pyniji/$artifact" >> "$GITHUB_ENV"
+        echo "macosArtifact=$artifact" >> "$GITHUB_ENV"
 
     - uses: actions/upload-artifact@v4
       with:
-        name: ${{ env.macosArtifactName }}
-        path: ${{ env.macosArtifactPath }}
+        name: ${{ env.macosArtifact }}
+        path: ${{ env.macosArtifact }}
 
     - name: Attach UART Serial Plotter (MacOS) Build to release
       uses: softprops/action-gh-release@v2
       if: ${{ github.event.release && github.event.action == 'published' }}
       with:
-        files: ${{ env.macosArtifactPath }}
+        files: ${{ env.macosArtifact }}
