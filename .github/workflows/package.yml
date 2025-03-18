@@ -1,0 +1,134 @@
+name: Package
+
+on:
+  # pull_request:
+  #   branches: [main]
+  push:
+    branches: [main]
+  release:
+    types: [published]
+  workflow_dispatch:
+
+jobs:
+  build_windows:
+
+    runs-on: windows-latest
+    continue-on-error: false
+
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      id: id_python_313
+      with:
+        python-version: '3.13'
+
+    - name: PyInstaller
+      working-directory: .
+      shell: pwsh
+      run: |
+        # setup the python environment
+        ${{ steps.id_python_313.outputs.python-path }} -m pip install -r requirements.txt
+        # now build the installer
+        ${{ steps.id_python_313.outputs.python-path }} -m PyInstaller --clean src/uart_serial_plotter.spec
+        $artifact="uart_serial_plotter_$(git describe --tags --dirty)_windows.exe"
+        mv dist/uart_serial_plotter.exe ${artifact}
+        "windowsArtifact=${artifact}" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+    - uses: actions/upload-artifact@v4
+      with:
+        name: ${{ env.windowsArtifact }}
+        path: ${{ env.windowsArtifact }}
+
+    - name: Attach UART Serial Plotter (Windows) Build to release
+      uses: softprops/action-gh-release@v2
+      if: ${{ github.event.release && github.event.action == 'published' }}
+      with:
+        files: ${{ env.windowsArtifact }}
+
+  build_linux:
+
+    runs-on: ubuntu-latest
+    continue-on-error: false
+
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      id: id_python_313
+      with:
+        python-version: '3.13'
+
+    - name: PyInstaller
+      working-directory: .
+      run: |
+        # setup the python environment
+        ${{ steps.id_python_313.outputs.python-path }} -m pip install -r requirements.txt
+        # now build the installer
+        ${{ steps.id_python_313.outputs.python-path }} -m PyInstaller --clean src/uart_serial_plotter.spec
+        artifact="uart_serial_plotter_$(git describe --tags --dirty)_linux.bin"
+        mv dist/uart_serial_plotter $artifact
+        echo "linuxArtifact=$artifact" >> "$GITHUB_ENV"
+
+    - uses: actions/upload-artifact@v4
+      with:
+        name: ${{ env.linuxArtifact }}
+        path: ${{ env.linuxArtifact }}
+
+    - name: Attach UART Serial Plotter (Linux) Build to release
+      uses: softprops/action-gh-release@v2
+      if: ${{ github.event.release && github.event.action == 'published' }}
+      with:
+        files: ${{ env.linuxArtifact }}
+
+  build_macos:
+
+    runs-on: macos-latest
+    continue-on-error: false
+
+    steps:
+    - name: Setup XCode
+      uses: maxim-lobanov/setup-xcode@v1
+      with:
+        xcode-version: latest-stable
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      id: id_python_313
+      with:
+        python-version: '3.13'
+
+    - name: Checkout repo
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: PyInstaller
+      working-directory: .
+      run: |
+        # setup the python environment
+        ${{ steps.id_python_313.outputs.python-path }} -m pip install -r requirements.txt
+        # now build the installer
+        ${{ steps.id_python_313.outputs.python-path }} -m PyInstaller --clean src/uart_serial_plotter.spec
+        artifact="uart_serial_plotter_$(git describe --tags --dirty)_macos.bin"
+        mv dist/uart_serial_plotter $artifact
+        echo "macosArtifact=$artifact" >> "$GITHUB_ENV"
+
+    - uses: actions/upload-artifact@v4
+      with:
+        name: ${{ env.macosArtifact }}
+        path: ${{ env.macosArtifact }}
+
+    - name: Attach UART Serial Plotter (MacOS) Build to release
+      uses: softprops/action-gh-release@v2
+      if: ${{ github.event.release && github.event.action == 'published' }}
+      with:
+        files: ${{ env.macosArtifact }}
